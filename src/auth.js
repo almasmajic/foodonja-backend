@@ -72,4 +72,28 @@ export default {
       return res.status(401).send();
     }
   },
+
+  //password change
+  async changeUserPassword(username, old_password, new_password) {
+    let db = await connect();
+    let user = await db.collection("users").findOne({ username: username }); //provjerava imamo li korisnika u bazi s tim usernameom
+
+    if (
+      user &&
+      user.password &&
+      (await bcrypt.compare(old_password, user.password))
+    ) {
+      let new_password_hashed = await bcrypt.hash(new_password, 8);
+
+      let result = await db.collection("users").updateOne(
+        { _id: user._id },
+        {
+          $set: {
+            password: new_password_hashed,
+          },
+        }
+      );
+      return result.modifiedCount == 1;
+    }
+  },
 };

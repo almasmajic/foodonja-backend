@@ -15,6 +15,16 @@ app.use(express.json());
 
 app.listen(port, () => console.log(`Server is on port: ${port}`));
 
+app.get("/recipes", (req, res) => {
+  {
+    let title = req.query.title;
+    console.log("Pretraga", title);
+    let recepti = store.recipes;
+
+    res.json(recepti);
+  }
+});
+
 app.post("/users", async (req, res) => {
   let user = req.body;
   let id;
@@ -39,11 +49,24 @@ app.post("/auth", async (req, res) => {
   }
 });
 
-app.get("/filters", async (req, res) => {
-  let db = await connect();
+//za password change
+app.patch("/users", [auth.verify], async (req, res) => {
+  let changes = req.body;
 
-  let cursor = await db.collection("filters").find();
-  let result = await cursor.toArray();
+  let username = req.jwt.username;
 
-  res.json(result);
+  if (changes.new_password && changes.old_password) {
+    let result = await auth.changeUserPassword(
+      username,
+      changes.old_password,
+      changes.new_password
+    );
+    if (result) {
+      res.status(201).send(); //ako je status 201 ne moram vracat poruku
+    } else {
+      res.status(500).json({ errror: "Cannot change password" }); //ako je status 500, znaci da je greska do servera
+    }
+  } else {
+    res.status(400).json({ error: "Krivi upit" }); //status 400 znaci da je korisnik poslao lose definiran upit
+  }
 });
