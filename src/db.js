@@ -1,9 +1,9 @@
 import mongo from "mongodb";
 
-let connection_string =
+const CONNECTION_URL =
   "mongodb+srv://admin:admin@foodonja.xuixn.mongodb.net/foodonja?retryWrites=true&w=majority";
 
-let client = new mongo.MongoClient(connection_string, {
+let client = new mongo.MongoClient(CONNECTION_URL, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
@@ -20,7 +20,6 @@ export default () => {
       if (err) {
         reject("Doslo je do greske " + err);
       } else {
-        console.log("Succesfully connected!!");
         db = client.db("foodonja");
         //console.log(db);
         resolve(db);

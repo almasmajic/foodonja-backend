@@ -3,7 +3,6 @@ dotenv.config();
 
 import connect from "./db.js";
 import express from "express";
-import mongo from "mongodb";
 import cors from "cors";
 import auth from "./auth.js";
 
@@ -12,8 +11,6 @@ const port = 3000;
 
 app.use(cors());
 app.use(express.json());
-
-app.listen(port, () => console.log(`Server is on port: ${port}`));
 
 app.get("/recipes", (req, res) => {
   {
@@ -70,3 +67,12 @@ app.patch("/users", [auth.verify], async (req, res) => {
     res.status(400).json({ error: "Krivi upit" }); //status 400 znaci da je korisnik poslao lose definiran upit
   }
 });
+
+connect()
+  .then((db) => {
+    console.log("Successfully Connected MongoDB!!");
+    app.listen(port, () => console.log(`Server is on port: ${port}`));
+  })
+  .catch((err) => {
+    console.log(`checking error: `, err);
+  });
