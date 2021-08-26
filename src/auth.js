@@ -25,22 +25,22 @@ export default {
     }
   },
 
-  async authUser(email, password) {
-    let user = await UserCollection.findOne({ email: email });
+  async login(email, password) {
+    const userDoc = await UserCollection.findOne({ email: email });
 
     if (
-      user &&
-      user.password &&
-      (await bcrypt.compare(password, user.password))
+      userDoc &&
+      userDoc.password &&
+      (await bcrypt.compare(password, userDoc.password))
     ) {
-      delete user.password;
-      let token = jwt.sign(user, process.env.JWT_SECRET, {
+      delete userDoc.password;
+      let token = jwt.sign(userDoc, process.env.JWT_SECRET, {
         algorithm: "HS512",
         expiresIn: "1 week",
       });
       return {
         token,
-        email: user.email,
+        email: userDoc.email,
       };
     } else {
       throw new Error("Nista od prijave");
@@ -48,36 +48,54 @@ export default {
   },
 
   verify(req, res, next) {
-    try {
-      let authorization = req.headers.authorization.split(" ");
-      let type = authorization[0];
-      let token = authorization[1];
-
-      if (type !== "Bearer") {
-        res.status(401).send();
-        return false;
-      } else {
-        req.jwt = jwt.verify(token, process.env.JWT_SECRET);
-        return next();
-      }
-    } catch (e) {
-      return res.status(401).send();
+    //checking if Authorization is set or not
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      const error = new Error("Not authenticated.");
+      error.statusCode = 401;
+      throw error;
     }
+
+    //spiliting Authorization then escape Bearer and send token in token variable
+    const token = authHeader.split(" ")[1];
+
+    let decodedToken;
+    try {
+      decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      err.statusCode = 500;
+      throw err;
+    }
+
+    if (!decodedToken) {
+      const error = new Error("Not authenticated.");
+      error.statusCode = 401;
+      throw error;
+    }
+
+    //seperating variables to use in next functions
+    req.user = {
+      _id: decodedToken._id,
+      email: decodedToken.email,
+      username: decodedToken.username,
+    };
+    // calling next function
+    next();
   },
 
   //password change
-  async changeUserPassword(username, old_password, new_password) {
-    let user = await UserCollection.findOne({ username: username }); //provjerava imamo li korisnika u bazi s tim usernameom
+  async changeUserPassword(email, old_password, new_password) {
+    let userDoc = await UserCollection.findOne({ email: email }); //provjerava imamo li korisnika u bazi s tim usernameom
 
     if (
-      user &&
-      user.password &&
-      (await bcrypt.compare(old_password, user.password))
+      userDoc &&
+      userDoc.password &&
+      (await bcrypt.compare(old_password, userDoc.password))
     ) {
-      let new_password_hashed = await bcrypt.hash(new_password, 8);
+      let new_password_hashed = await bcrypt.hash(new_password, 12);
 
       let result = await UserCollection.updateOne(
-        { _id: user._id },
+        { _id: userDoc._id },
         {
           $set: {
             password: new_password_hashed,

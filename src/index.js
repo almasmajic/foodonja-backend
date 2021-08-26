@@ -12,8 +12,7 @@ const PORT = process.env.PORT | 3000;
 app.use(cors());
 app.use(express.json());
 
-// api's will be places in the sequence of flow.
-// first will be register api and it's name should be register
+// register
 app.put("/register", async (req, res) => {
   try {
     const user = req.body;
@@ -25,6 +24,41 @@ app.put("/register", async (req, res) => {
   }
 });
 
+// login
+app.post("/login", async (req, res) => {
+  try {
+    const user = req.body;
+    const result = await auth.login(user.email, user.password);
+    res.json(result);
+  } catch (e) {
+    return res.status(401).json({ error: e.message });
+  }
+});
+
+// update password
+app.patch("/update-password", [auth.verify], async (req, res) => {
+  const changes = req.body;
+
+  const email = req.user.email;
+
+  if (changes.new_password && changes.old_password) {
+    const result = await auth.changeUserPassword(
+      email,
+      changes.old_password,
+      changes.new_password
+    );
+    if (result) {
+      res.status(201).json({
+        message: "Successfully updated password!",
+      }); //ako je status 201 ne moram vracat poruku
+    } else {
+      res.status(500).json({ errror: "Cannot change password" }); //ako je status 500, znaci da je greska do servera
+    }
+  } else {
+    res.status(400).json({ error: "Krivi upit" }); //status 400 znaci da je korisnik poslao lose definiran upit
+  }
+});
+
 app.get("/recipes", (req, res) => {
   {
     let title = req.query.title;
@@ -32,39 +66,6 @@ app.get("/recipes", (req, res) => {
     let recepti = store.recipes;
 
     res.json(recepti);
-  }
-});
-
-app.post("/auth", async (req, res) => {
-  let user = req.body;
-
-  try {
-    let result = await auth.authUser(user.email, user.password);
-    res.json(result);
-  } catch (e) {
-    return res.status(401).json({ error: e.message });
-  }
-});
-
-//za password change
-app.patch("/users", [auth.verify], async (req, res) => {
-  let changes = req.body;
-
-  let username = req.jwt.username;
-
-  if (changes.new_password && changes.old_password) {
-    let result = await auth.changeUserPassword(
-      username,
-      changes.old_password,
-      changes.new_password
-    );
-    if (result) {
-      res.status(201).send(); //ako je status 201 ne moram vracat poruku
-    } else {
-      res.status(500).json({ errror: "Cannot change password" }); //ako je status 500, znaci da je greska do servera
-    }
-  } else {
-    res.status(400).json({ error: "Krivi upit" }); //status 400 znaci da je korisnik poslao lose definiran upit
   }
 });
 
@@ -90,8 +91,6 @@ app.post("/upload", [auth.verify], async (req, res) => {
   }
 });
 
-// MongoDb should be connected before application listening
-// This connection and listening should be down of the page
 initDB()
   .then((db) => {
     console.log("Successfully Connected MongoDB!!");
