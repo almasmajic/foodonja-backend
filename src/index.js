@@ -5,7 +5,7 @@ import { initDB } from "./db.js";
 import express from "express";
 import cors from "cors";
 import auth from "./auth.js";
-
+import recipe from "./recipe.js";
 const app = express();
 const PORT = process.env.PORT | 3000;
 
@@ -59,6 +59,22 @@ app.patch("/update-password", [auth.verify], async (req, res) => {
   }
 });
 
+// **** Recipe section start ****
+app.post("/upload-recipe", [auth.verify], async (req, res) => {
+  const recipeData = req.body;
+
+  const userData = req.user;
+  let recipeId = await recipe.addRecipe(recipeData, userData);
+  if (recipeId) {
+    res.status(201).json({
+      message: "Successfully added recipe!",
+      recipeId: recipeId,
+    }); //ako je status 201 ne moram vracat poruku
+  } else {
+    res.status(500).json({ errror: "Something went while adding recipe!" }); //ako je status 500, znaci da je greska do servera
+  }
+});
+
 app.get("/recipes", (req, res) => {
   {
     let title = req.query.title;
@@ -69,28 +85,8 @@ app.get("/recipes", (req, res) => {
   }
 });
 
-//za password change
-app.post("/upload", [auth.verify], async (req, res) => {
-  let changes = req.body;
-
-  let username = req.jwt.username;
-
-  if (changes.new_password && changes.old_password) {
-    let result = await auth.changeUserPassword(
-      username,
-      changes.old_password,
-      changes.new_password
-    );
-    if (result) {
-      res.status(201).send(); //ako je status 201 ne moram vracat poruku
-    } else {
-      res.status(500).json({ errror: "Cannot change password" }); //ako je status 500, znaci da je greska do servera
-    }
-  } else {
-    res.status(400).json({ error: "Krivi upit" }); //status 400 znaci da je korisnik poslao lose definiran upit
-  }
-});
-
+// MongoDb should be connected before application listening
+// This connection and listening should be down of the page
 initDB()
   .then((db) => {
     console.log("Successfully Connected MongoDB!!");

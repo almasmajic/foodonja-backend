@@ -10,6 +10,7 @@ let client = new mongo.MongoClient(CONNECTION_URL, {
 
 let db = null;
 let UserCollection = null;
+let RecipeCollection = null;
 
 export const initDB = () => {
   return new Promise(async (resolve, reject) => {
@@ -23,6 +24,7 @@ export const initDB = () => {
       } else {
         db = client.db("foodonja");
         setupUserCollection();
+        setupRecipeCollection();
         resolve(db);
       }
     });
@@ -34,4 +36,8 @@ export const setupUserCollection = () => {
   UserCollection.createIndex({ email: 1 }, { unique: true });
 };
 
-export { db, UserCollection };
+export const setupRecipeCollection = () => {
+  RecipeCollection = db.collection("recipes");
+};
+
+export { db, UserCollection, RecipeCollection };
