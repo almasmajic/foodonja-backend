@@ -1,26 +1,20 @@
-import mongo from "mongodb";
-import connect from "./db.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-
-(async () => {
-  let db = await connect();
-  await db.collection("users").createIndex({ email: 1 }, { unique: true });
-})();
+import { UserCollection } from "./db.js";
 
 export default {
   async registerUser(userData) {
-    let db = await connect();
-
-    let doc = {
+    const userDoc = await UserCollection.findOne({ email: userData.email });
+    if (userDoc) {
+      throw new Error("user with this E-Mail address already exists!");
+    }
+    const doc = {
       username: userData.username,
       email: userData.email,
-      password: await bcrypt.hash(userData.password, 8),
+      password: await bcrypt.hash(userData.password, 12),
     };
-
     try {
-      let result = await db.collection("users").insertOne(doc);
-
+      let result = await UserCollection.insertOne(doc);
       if (result && result.insertedId) {
         return result.insertedId;
       }
@@ -32,9 +26,7 @@ export default {
   },
 
   async authUser(email, password) {
-    let db = await connect();
-
-    let user = await db.collection("users").findOne({ email: email });
+    let user = await UserCollection.findOne({ email: email });
 
     if (
       user &&
@@ -75,8 +67,7 @@ export default {
 
   //password change
   async changeUserPassword(username, old_password, new_password) {
-    let db = await connect();
-    let user = await db.collection("users").findOne({ username: username }); //provjerava imamo li korisnika u bazi s tim usernameom
+    let user = await UserCollection.findOne({ username: username }); //provjerava imamo li korisnika u bazi s tim usernameom
 
     if (
       user &&
@@ -85,7 +76,7 @@ export default {
     ) {
       let new_password_hashed = await bcrypt.hash(new_password, 8);
 
-      let result = await db.collection("users").updateOne(
+      let result = await UserCollection.updateOne(
         { _id: user._id },
         {
           $set: {

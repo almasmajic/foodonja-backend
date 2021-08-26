@@ -9,8 +9,9 @@ let client = new mongo.MongoClient(CONNECTION_URL, {
 });
 
 let db = null;
+let UserCollection = null;
 
-export default () => {
+export const initDB = () => {
   return new Promise(async (resolve, reject) => {
     if (db && client) {
       resolve(db);
@@ -21,9 +22,16 @@ export default () => {
         reject("Doslo je do greske " + err);
       } else {
         db = client.db("foodonja");
-        //console.log(db);
+        setupUserCollection();
         resolve(db);
       }
     });
   });
 };
+
+export const setupUserCollection = () => {
+  UserCollection = db.collection("users");
+  UserCollection.createIndex({ email: 1 }, { unique: true });
+};
+
+export { db, UserCollection };
