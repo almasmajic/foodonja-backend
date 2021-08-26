@@ -12,7 +12,7 @@ const PORT = process.env.PORT | 3000;
 app.use(cors());
 app.use(express.json());
 
-// register
+//register
 app.put("/register", async (req, res) => {
   try {
     const user = req.body;
@@ -75,18 +75,22 @@ app.post("/upload-recipe", [auth.verify], async (req, res) => {
   }
 });
 
-app.get("/recipes", (req, res) => {
-  {
-    let title = req.query.title;
-    console.log("Pretraga", title);
-    let recepti = store.recipes;
-
-    res.json(recepti);
+app.post("/recipes", [auth.verify], async (req, res) => {
+  let searchQuery = {};
+  if (req.body.search && req.body.search !== "") {
+    const queryRegex = { $regex: `.*` + req.body.search + `.*`, $options: `i` };
+    const searchQuery = {
+      $or: [{ name: queryRegex }, { category: queryRegex }],
+    };
+  }
+  try {
+    const result = await recipe.getAndSearchRecipe(searchQuery);
+    res.json(result);
+  } catch (e) {
+    return res.status(401).json({ error: e.message });
   }
 });
 
-// MongoDb should be connected before application listening
-// This connection and listening should be down of the page
 initDB()
   .then((db) => {
     console.log("Successfully Connected MongoDB!!");

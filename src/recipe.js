@@ -22,4 +22,14 @@ export default {
       }
     }
   },
+  async getAndSearchRecipe(searchQuery) {
+    try {
+      const result = await RecipeCollection.find(searchQuery).toArray();
+      return result;
+    } catch (e) {
+      if ((e.name == "MongoError" && e.code == 11000) || []) {
+        throw new Error("Something went wrong while adding recipe!");
+      }
+    }
+  },
 };
