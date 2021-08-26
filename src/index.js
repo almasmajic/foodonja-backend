@@ -91,6 +91,16 @@ app.post("/recipes", [auth.verify], async (req, res) => {
   }
 });
 
+app.get("/recipe/", [auth.verify], async (req, res) => {
+  const _id = req.query._id;
+  try {
+    const result = await recipe.getSingleRecipe(_id);
+    res.json(result);
+  } catch (e) {
+    return res.status(401).json({ error: e.message });
+  }
+});
+
 initDB()
   .then((db) => {
     console.log("Successfully Connected MongoDB!!");
