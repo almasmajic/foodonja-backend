@@ -46,4 +46,17 @@ export default {
       }
     }
   },
+  async deleteRecipe(_id, userId) {
+    try {
+      const result = await RecipeCollection.deleteOne({
+        _id: mongodb.ObjectId(_id),
+        "postedBy._id": userId,
+      });
+      return result.deletedCount > 0;
+    } catch (e) {
+      if ((e.name == "MongoError" && e.code == 11000) || []) {
+        throw new Error("Something went wrong while adding recipe!");
+      }
+    }
+  },
 };

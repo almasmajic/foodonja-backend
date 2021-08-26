@@ -101,6 +101,21 @@ app.get("/recipe/", [auth.verify], async (req, res) => {
   }
 });
 
+app.delete("/recipe/", [auth.verify], async (req, res) => {
+  const _id = req.query._id;
+  const userId = req.user._id;
+  try {
+    const result = await recipe.deleteRecipe(_id, userId);
+    res.json({
+      message: result
+        ? "Successfully deleted recipe! "
+        : "Recipe not found or you are not allowed to delete this recipe!",
+    });
+  } catch (e) {
+    return res.status(401).json({ error: e.message });
+  }
+});
+
 initDB()
   .then((db) => {
     console.log("Successfully Connected MongoDB!!");
