@@ -131,6 +131,36 @@ app.put("/update-recipe", [auth.verify], async (req, res) => {
   }
 });
 
+app.put("/favorite-recipe/", [auth.verify], async (req, res) => {
+  const recipeId = req.query._id;
+  const userData = req.user;
+  try {
+    const result = await recipe.favoriteRecipe(recipeId, userData);
+    res.json({
+      message: result
+        ? "Successfully recipe added as favorite! "
+        : "Something went wrong!!",
+    });
+  } catch (e) {
+    return res.status(401).json({ error: e.message });
+  }
+});
+
+app.put("/delete-favorite-recipe/", [auth.verify], async (req, res) => {
+  const recipeId = req.query._id;
+  const userId = req.user._id;
+  try {
+    const result = await recipe.deleteFavoriteRecipe(recipeId, userId);
+    res.json({
+      message: result
+        ? "Successfully recipe favorite removed! "
+        : "Something went wrong!!",
+    });
+  } catch (e) {
+    return res.status(401).json({ error: e.message });
+  }
+});
+
 initDB()
   .then((db) => {
     console.log("Successfully Connected MongoDB!!");

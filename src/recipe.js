@@ -38,7 +38,6 @@ export default {
       const result = await RecipeCollection.findOne({
         _id: mongodb.ObjectId(_id),
       });
-      console.log("checking result: ", result);
       return result;
     } catch (e) {
       if ((e.name == "MongoError" && e.code == 11000) || []) {
@@ -93,6 +92,64 @@ export default {
         }
       );
       return result.modifiedCount == 1;
+    } catch (e) {
+      throw new Error(e);
+    }
+  },
+  async favoriteRecipe(_id, userData) {
+    try {
+      const recipeDoc = await RecipeCollection.findOne({
+        _id: mongodb.ObjectId(_id),
+      });
+      if (!recipeDoc) throw new Error("Recipe not found!");
+      if (recipeDoc.userId === userData._id)
+        throw new Error("You can't favorite your own recipe!");
+      let favorites = recipeDoc.favorites;
+      if (!favorites) {
+        favorites = [];
+        favorites.push(userData);
+      }
+      const index = favorites.findIndex((fav) => fav._id === userData._id);
+      if (index < 0) favorites.push(userData);
+      const result = await RecipeCollection.updateOne(
+        { _id: recipeDoc._id },
+        {
+          $set: {
+            favorites: favorites,
+          },
+        }
+      );
+      return result.modifiedCount > 0;
+    } catch (e) {
+      throw new Error(e);
+    }
+  },
+  async deleteFavoriteRecipe(_id, userId) {
+    try {
+      const recipeDoc = await RecipeCollection.findOne({
+        _id: mongodb.ObjectId(_id),
+      });
+      if (!recipeDoc) throw new Error("Recipe not found!");
+      if (recipeDoc.userId === userId)
+        throw new Error("You can't favorite your own recipe!");
+      let updatedData = {};
+      if (!recipeDoc.favorites) throw new Error("favorites not found!");
+      updatedData["favorites"] = recipeDoc.favorites.filter(
+        (fav) => fav._id !== userId
+      );
+
+      if (updatedData.favorites.length === recipeDoc.favorites) {
+        updatedData = {};
+      }
+      const result = await RecipeCollection.updateOne(
+        { _id: recipeDoc._id },
+        {
+          $set: {
+            ...updatedData,
+          },
+        }
+      );
+      return result.modifiedCount > 0;
     } catch (e) {
       throw new Error(e);
     }
