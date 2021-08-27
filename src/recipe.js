@@ -59,4 +59,42 @@ export default {
       }
     }
   },
+  async updateRecipe(recipeData, userId) {
+    try {
+      const recipeDoc = await RecipeCollection.findOne({
+        _id: mongodb.ObjectId(recipeData._id),
+      });
+
+      if (!recipeDoc) throw new Error("Recipe not found!");
+      if (recipeDoc.postedBy._id !== userId)
+        throw new Error(
+          "You don't have enough permissions to update this recipe!"
+        );
+      const updatedRecipe = {};
+      if (recipeData.image && recipeData.image !== "")
+        updatedRecipe["image"] = recipeData.image;
+      if (recipeData.name && recipeData.name !== "")
+        updatedRecipe["name"] = recipeData.name;
+      if (recipeData.ingredients && recipeData.ingredients.length > 0)
+        updatedRecipe["ingredients"] = recipeData.ingredients;
+      if (recipeData.how_to && recipeData.how_to !== "")
+        updatedRecipe["how_to"] = recipeData.how_to;
+      if (recipeData.prep_time && recipeData.prep_time !== "")
+        updatedRecipe["prep_time"] = recipeData.prep_time;
+      if (recipeData.category && recipeData.category !== "")
+        updatedRecipe["category"] = recipeData.category;
+
+      const result = await RecipeCollection.updateOne(
+        { _id: recipeDoc._id },
+        {
+          $set: {
+            ...updatedRecipe,
+          },
+        }
+      );
+      return result.modifiedCount == 1;
+    } catch (e) {
+      throw new Error(e);
+    }
+  },
 };
