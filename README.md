@@ -1,4 +1,4 @@
-# foodonja-frontend
+# foodonja-backend
 
 * Backend dio web-app Foodonja
 * Kolegij: [Web aplikacije](https://www.notion.so/Web-aplikacije-7ba8350d498546a78812399024edac44) 
