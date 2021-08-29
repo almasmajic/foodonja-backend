@@ -9,7 +9,16 @@ import recipe from "./recipe.js";
 const app = express();
 const PORT = process.env.PORT | 3000;
 
-app.use(cors());
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "OPTIONS, GET, POST, PUT, PATCH, DELETE"
+  );
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  next();
+});
+
 app.use(express.json());
 
 //register
@@ -154,6 +163,37 @@ app.put("/delete-favorite-recipe/", [auth.verify], async (req, res) => {
     res.json({
       message: result
         ? "Successfully recipe favorite removed! "
+        : "Something went wrong!!",
+    });
+  } catch (e) {
+    return res.status(401).json({ error: e.message });
+  }
+});
+
+app.put("/add-rating/", [auth.verify], async (req, res) => {
+  const recipeId = req.query._id;
+  const rating = req.body.rating;
+  const userData = req.user;
+  try {
+    const result = await recipe.addRating(recipeId, rating, userData);
+    res.json({
+      message: result
+        ? "Rating successfully added! "
+        : "Something went wrong!!",
+    });
+  } catch (e) {
+    return res.status(401).json({ error: e.message });
+  }
+});
+
+app.put("/remove-rating/", [auth.verify], async (req, res) => {
+  const recipeId = req.query._id;
+  const userId = req.user._id;
+  try {
+    const result = await recipe.removeRating(recipeId, userId);
+    res.json({
+      message: result
+        ? "Rating successfully removed! "
         : "Something went wrong!!",
     });
   } catch (e) {

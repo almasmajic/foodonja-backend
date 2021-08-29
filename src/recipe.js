@@ -154,4 +154,85 @@ export default {
       throw new Error(e);
     }
   },
+  async addRating(_id, rating, userData) {
+    try {
+      const recipeDoc = await RecipeCollection.findOne({
+        _id: mongodb.ObjectId(_id),
+      });
+      if (!recipeDoc) throw new Error("Recipe not found!");
+      if (recipeDoc.userId === userData._id)
+        throw new Error("You can't add rating your own recipe!");
+      let updatedData = {
+        ratingData: recipeDoc.ratingData,
+        rating: recipeDoc.rating,
+      };
+      if (!updatedData.ratingData) updatedData["ratingData"] = [];
+      const index = updatedData.ratingData.findIndex(
+        (rat) => rat._id === userData._id
+      );
+      if (index && index > -1) throw new Error("Rating already added!");
+      updatedData.ratingData.push({
+        ...userData,
+        rating,
+      });
+      if (typeof rating !== "number" || rating > 5)
+        throw new Error("Invalid rating Value!");
+      if (!updatedData.rating) updatedData["rating"] = rating;
+      else {
+        let totalRating = 0;
+        updatedData.ratingData.forEach((element) => {
+          totalRating += element.rating;
+        });
+        updatedData["rating"] = totalRating / updatedData.ratingData.length;
+      }
+
+      const result = await RecipeCollection.updateOne(
+        { _id: recipeDoc._id },
+        {
+          $set: {
+            ...updatedData,
+          },
+        }
+      );
+      return result.modifiedCount > 0;
+    } catch (e) {
+      throw new Error(e);
+    }
+  },
+  async removeRating(_id, userId) {
+    try {
+      const recipeDoc = await RecipeCollection.findOne({
+        _id: mongodb.ObjectId(_id),
+      });
+      if (!recipeDoc) throw new Error("Recipe not found!");
+      if (recipeDoc.userId === userId)
+        throw new Error("You can't add or remove rating your own recipe!");
+      let updatedData = {
+        ratingData: recipeDoc.ratingData,
+        rating: recipeDoc.rating,
+      };
+      if (!updatedData.ratingData) throw new Error("Rating not found!");
+      const index = updatedData.ratingData.findIndex(
+        (rat) => rat._id === userId
+      );
+      if (index && index < 0) throw new Error("You didn't add rating!");
+      updatedData.ratingData = updatedData.ratingData.splice(index, 1);
+      let totalRating = 0;
+      updatedData.ratingData.forEach((element) => {
+        totalRating += element.rating;
+      });
+      updatedData["rating"] = totalRating / updatedData.ratingData.length;
+      const result = await RecipeCollection.updateOne(
+        { _id: recipeDoc._id },
+        {
+          $set: {
+            ...updatedData,
+          },
+        }
+      );
+      return result.modifiedCount > 0;
+    } catch (e) {
+      throw new Error(e);
+    }
+  },
 };

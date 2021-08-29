@@ -4,7 +4,10 @@ import { UserCollection } from "./db.js";
 
 export default {
   async registerUser(userData) {
+    console.log(`checking userData: `, userData);
     const userDoc = await UserCollection.findOne({ email: userData.email });
+    console.log(`checking userDoc: `, userDoc);
+
     if (userDoc) {
       throw new Error("user with this E-Mail address already exists!");
     }
