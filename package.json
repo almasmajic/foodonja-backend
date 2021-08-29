@@ -2,11 +2,14 @@
   "name": "foodonja-backend",
   "version": "1.0.0",
   "description": "Backend Foodonja aplikacije",
-  "main": "index.js",
+  "main": "src/index.js",
+  "engines": {
+    "node": "14.x"
+  },
   "type": "module",
   "scripts": {
     "serve": "nodemon --exec babel-node src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node src/index.js"
   },
   "repository": {
     "type": "git",
@@ -31,5 +34,6 @@
     "@babel/core": "^7.14.0",
     "@babel/node": "^7.13.13",
     "@babel/preset-env": "^7.14.0"
-  }
+  },
+  "keywords": []
 }
